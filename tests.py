@@ -29,3 +29,11 @@ class TestBooksCollector:
         collector.set_book_genre('Колобок', 'Эротика')
 
         assert collector.books_genre['Колобок'] == ''
+
+    def test_get_book_genre_add_book_with_genre(self):
+        collector = BooksCollector()
+
+        collector.add_new_book('Колобок')
+        collector.set_book_genre('Колобок', 'Ужасы')
+
+        assert collector.books_genre.get('Колобок') == 'Ужасы'
