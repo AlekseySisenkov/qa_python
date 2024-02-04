@@ -1,39 +1,66 @@
+import pytest
+
 from main import BooksCollector
 
-# класс TestBooksCollector объединяет набор тестов, которыми мы покрываем наше приложение BooksCollector
-# обязательно указывать префикс Test
 class TestBooksCollector:
 
-    # пример теста:
-    # обязательно указывать префикс test_
-    # дальше идет название метода, который тестируем add_new_book_
-    # затем, что тестируем add_two_books - добавление двух книг
+    @pytest.fixture(autouse=True)
+    def book(self):
+        self.collector = BooksCollector()
+
+        self.collector.add_new_book('Колобок')
+
+        return self.collector
+
+    @pytest.fixture(scope='function')
+    def genre_book(self, book):
+        return self.collector.set_book_genre('Колобок', 'Ужасы')
+
     def test_add_new_book_add_two_books(self):
-        # создаем экземпляр (объект) класса BooksCollector
-        collector = BooksCollector()
 
-        # добавляем две книги
-        collector.add_new_book('Гордость и предубеждение и зомби')
-        collector.add_new_book('Что делать, если ваш кот хочет вас убить')
+        self.collector.add_new_book('Что делать, если ваш кот хочет вас убить')
 
-        # проверяем, что добавилось именно две
-        # словарь books_rating, который нам возвращает метод get_books_rating, имеет длину 2
-        assert len(collector.get_books_genre()) == 2
+        assert len(self.collector.get_books_genre()) == 2
 
-    # напиши свои тесты ниже
-    # чтобы тесты были независимыми в каждом из них создавай отдельный экземпляр класса BooksCollector()
     def test_set_book_genre_add_wrong_genre(self):
-        collector = BooksCollector()
+        self.collector.set_book_genre('Колобок', 'Эротика')
 
-        collector.add_new_book('Колобок')
-        collector.set_book_genre('Колобок', 'Эротика')
+        assert self.collector.books_genre['Колобок'] == ''
 
-        assert collector.books_genre['Колобок'] == ''
+    def test_get_book_genre_add_book_with_genre(self, genre_book):
 
-    def test_get_book_genre_add_book_with_genre(self):
-        collector = BooksCollector()
+        assert self.collector.books_genre.get('Колобок') == 'Ужасы'
 
-        collector.add_new_book('Колобок')
-        collector.set_book_genre('Колобок', 'Ужасы')
+    def test_get_books_with_specific_genre_if_genre_not_in_self_genre(self, genre_book):
 
-        assert collector.books_genre.get('Колобок') == 'Ужасы'
+        self.collector.get_books_with_specific_genre('Эротика')
+
+        assert len(self.collector.get_books_with_specific_genre('Эротика')) == 0
+
+    def test_get_books_genre_add_book_with_genre(self, genre_book):
+
+        assert self.collector.get_books_genre() == {'Колобок': 'Ужасы'}
+
+    def test_get_books_for_children_if_genre_not_for_children(self, genre_book):
+
+        assert len(self.collector.get_books_for_children()) == 0
+
+    def test_add_book_in_favorites_if_name_not_in_books_genre(self, genre_book):
+
+        self.collector.add_book_in_favorites('Москау')
+
+        assert len(self.collector.get_list_of_favorites_books()) == 0
+
+    def test_delete_book_from_favorites_if_book_in_favorites(self, genre_book):
+
+        self.collector.add_book_in_favorites('Колобок')
+
+        self.collector.delete_book_from_favorites('Колобок')
+
+        assert 'Колобок' not in self.collector.get_list_of_favorites_books()
+
+    def test_get_list_of_favorites_books_add_book(self, genre_book):
+
+        self.collector.add_book_in_favorites('Колобок')
+
+        assert len(self.collector.get_list_of_favorites_books()) > 0
